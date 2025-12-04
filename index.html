@@ -1,157 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Task Board with Offline Sync - Manage your tasks efficiently with offline capabilities">
-  <title>Task Board</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/themes.css">
-  <link rel="stylesheet" href="css/animations.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow Simple</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <!-- Skip link for accessibility -->
-  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <header class="app-header">
-    <h1>Task Board</h1>
-    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
-      <span class="theme-icon">🌙</span>
-    </button>
-  </header>
+<body data-theme="light">
 
-  <main id="main-content" class="app-main">
-    <!-- Controls Section -->
-    <section class="controls-section" aria-label="Task controls">
-      <!-- Add Task Form -->
-      <form id="add-task-form" class="add-task-form">
-        <div class="form-group">
-          <label for="task-title">Task Title</label>
-          <input 
-            type="text" 
-            id="task-title" 
-            name="title" 
-            placeholder="Enter task title" 
-            required 
-            aria-required="true"
-          >
-          <span class="error-message" id="title-error" role="alert"></span>
+    <nav class="sidebar">
+        <div class="logo">TaskFlow</div>
+        <div class="nav-btn active" id="nav-board" onclick="switchView('board')">Board</div>
+        <div class="nav-btn" id="nav-analytics" onclick="switchView('analytics')">Analytics</div>
+        <div class="nav-btn" onclick="alert('Copied')">Invite Team</div>
+
+        <div style="margin-top:auto;">
+            <div class="nav-btn" onclick="toggleTheme()">Dark Mode</div>
+            <div class="nav-btn" onclick="resetData()">Reset</div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Task</button>
-      </form>
-
-      <!-- Search and Sort Controls -->
-      <div class="filter-controls">
-        <div class="search-group">
-          <label for="search-input" class="sr-only">Search tasks</label>
-          <input 
-            type="search" 
-            id="search-input" 
-            placeholder="Search tasks..." 
-            aria-label="Search tasks"
-          >
-        </div>
-        
-        <div class="sort-group">
-          <label for="sort-select" class="sr-only">Sort tasks by</label>
-          <select id="sort-select" aria-label="Sort tasks by">
-            <option value="created">Sort by Created</option>
-            <option value="due">Sort by Due Date</option>
-            <option value="title">Sort by Title</option>
-            <option value="priority">Sort by Priority</option>
-          </select>
-        </div>
-
-        <button id="undo-btn" class="btn btn-secondary" aria-label="Undo last action" disabled>
-          Undo
-        </button>
-      </div>
-    </section>
-
-    <!-- Task List Section -->
-    <section class="task-list-section" aria-label="Task list">
-      <div id="task-list" class="task-list" role="list" aria-live="polite">
-        <!-- Tasks will be rendered here -->
-      </div>
-      <div id="no-results" class="no-results" hidden>
-        <p>No tasks found matching your search</p>
-      </div>
-    </section>
-
-    <!-- Pagination Section -->
-    <nav id="pagination" class="pagination" aria-label="Task pagination" hidden>
-      <!-- Pagination controls will be rendered here -->
     </nav>
-  </main>
 
-  <footer class="app-footer">
-    <div class="footer-actions">
-      <button id="import-btn" class="btn btn-secondary" aria-label="Import tasks">
-        Import
-      </button>
-      <input type="file" id="import-file" accept=".json" hidden aria-hidden="true">
-      <button id="export-btn" class="btn btn-secondary" aria-label="Export tasks">
-        Export
-      </button>
+    <main class="main-content">
+        <header>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search tasks..." onkeyup="filterTasks()">
+            </div>
+            <button class="btn btn-primary" onclick="openModal()">+ New Task</button>
+        </header>
+
+        <div id="view-board">
+            <div class="column" id="col-todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="col-header"><span>To Do</span> <span id="c-todo" style="color:var(--text-muted)">0</span>
+                </div>
+                <div class="task-list" id="list-todo"></div>
+            </div>
+            <div class="column" id="col-progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="col-header"><span>In Progress</span> <span id="c-progress"
+                        style="color:var(--text-muted)">0</span></div>
+                <div class="task-list" id="list-progress"></div>
+            </div>
+
+            <div class="column" id="col-incomplete" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="col-header"><span style="color:var(--danger)">Incomplete</span> <span id="c-incomplete"
+                        style="color:var(--text-muted)">0</span></div>
+                <div class="task-list" id="list-incomplete"></div>
+            </div>
+            <div class="column" id="col-done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="col-header"><span style="color:var(--success)">Done</span> <span id="c-done"
+                        style="color:var(--text-muted)">0</span></div>
+                <div class="task-list" id="list-done"></div>
+            </div>
+        </div>
+
+        <div id="view-analytics">
+            <h2 style="font-size:1.2rem; margin-bottom:20px;">Performance</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div style="color:var(--text-muted); font-size:0.85rem">Total Tasks</div>
+                    <div class="stat-val" id="an-total">0</div>
+                </div>
+                <div class="stat-box">
+                    <div style="color:var(--text-muted); font-size:0.85rem">On-Time Rate</div>
+                    <div class="stat-val" style="color:var(--success)" id="an-ontime">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div style="color:var(--text-muted); font-size:0.85rem">Missed</div>
+                    <div class="stat-val" style="color:var(--danger)" id="an-late">0</div>
+                </div>
+                <div class="stat-box">
+                    <div style="color:var(--text-muted); font-size:0.85rem">Active Members</div>
+                    <div class="stat-val">4</div>
+                </div>
+            </div>
+
+            <h3 style="font-size:1rem;">Distribution</h3>
+            <div class="chart-section">
+                <div class="chart-container">
+                    <canvas id="taskPieChart" width="270" height="270"></canvas>
+                </div>
+                <div class="chart-legend" id="chart-legend"></div>
+            </div>
+            <div class="missed-box">
+                <h3 style="font-size:1rem; margin-top:0; color:var(--danger)">Moved to Incomplete</h3>
+                <ul id="missed-log" class="missed-list"></ul>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="task-modal">
+        <div class="modal-box">
+            <h2 style="margin-top:0; font-size:1.2rem;">Task Details</h2>
+            <input type="hidden" id="t-id">
+
+            <label style="font-size:0.85rem; display:block; margin-bottom:5px;">Task Title</label>
+            <input type="text" id="t-title" placeholder="Enter task name...">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <label style="font-size:0.85rem; display:block; margin-bottom:5px;">Assign To</label>
+                    <select id="t-team" multiple>
+                        <option value="Unassigned">Unassigned</option>
+                        <option value="Alex Design">Alex (Design)</option>
+                        <option value="Sam Dev">Sam (Dev)</option>
+                        <option value="Jordan PM">Jordan (PM)</option>
+                        <option value="Riley QA">Riley (QA)</option>
+                        <option value="Project Lead">Project Lead</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.85rem; display:block; margin-bottom:5px;">Due Date</label>
+                    <input type="datetime-local" id="t-due">
+                </div>
+            </div>
+
+            <h4 style="margin:15px 0 5px 0; font-size:0.9rem;">History</h4>
+            <div id="activity-log-display">No activity yet.</div>
+
+            <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn"
+                    style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color)"
+                    onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTask()">Save</button>
+            </div>
+        </div>
     </div>
-  </footer>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true">
-    <!-- Toast notifications will be rendered here -->
-  </div>
-
-  <!-- Edit Task Modal -->
-  <div id="edit-modal" class="modal" hidden role="dialog" aria-labelledby="edit-modal-title" aria-modal="true">
-    <div class="modal-content">
-      <h2 id="edit-modal-title">Edit Task</h2>
-      <form id="edit-task-form">
-        <div class="form-group">
-          <label for="edit-title">Title</label>
-          <input type="text" id="edit-title" name="title" required aria-required="true">
-        </div>
-        <div class="form-group">
-          <label for="edit-description">Description</label>
-          <textarea id="edit-description" name="description" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="edit-priority">Priority</label>
-          <select id="edit-priority" name="priority">
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="edit-status">Status</label>
-          <select id="edit-status" name="status">
-            <option value="todo">To Do</option>
-            <option value="in-progress">In Progress</option>
-            <option value="complete">Complete</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="edit-due-date">Due Date</label>
-          <input type="date" id="edit-due-date" name="dueDate">
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button type="button" id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="js/utils.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/undo.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/sort.js"></script>
-  <script src="js/pagination.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/events.js"></script>
-  <script src="js/app.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>
